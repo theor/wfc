@@ -8,11 +8,14 @@ The software is provided "as is", without warranty of any kind, express or impli
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Xml.Linq;
 using UnityEditor;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 using Random = UnityEngine.Random;
 
 class Integration
@@ -41,6 +44,57 @@ class Integration
             ClearConsoleMethod.Invoke(new object(), null);
         }
     }
+    
+    [MenuItem("WFC/All")]
+    static void Main()
+    {
+        Stopwatch sw = Stopwatch.StartNew();
+
+        Random random = new Random();
+        XDocument xdoc = XDocument.Load("C:\\Users\\theor\\Downloads\\WaveFunctionCollapse-master\\samples.xml");
+
+        int counter = 1;
+        foreach (XElement xelem in xdoc.Root.Elements("overlapping", "simpletiled"))
+        {
+            Model model;
+            string name = xelem.Get<string>("name");
+            Debug.Log($"< {name}");
+
+            if (xelem.Name == "overlapping") model = new OverlappingModel(name, xelem.Get("N", 2), xelem.Get("width", 48), xelem.Get("height", 48),
+                xelem.Get("periodicInput", true), xelem.Get("periodic", false), xelem.Get("symmetry", 8), xelem.Get("ground", 0));
+//            else if (xelem.Name == "simpletiled")
+//                model = new SimpleTiledModel(name, xelem.Get<string>("subset"),
+//                xelem.Get("width", 10), xelem.Get("height", 10), xelem.Get("periodic", false), xelem.Get("black", false));
+            else continue;
+
+            for (int i = 0; i < xelem.Get("screenshots", 2); i++)
+            {
+                for (int k = 0; k < 10; k++)
+                {
+                    Console.Write("> ");
+                    int seed = 42;// random.Next();
+                    bool finished = model.Run(seed, xelem.Get("limit", 0));
+                    if (finished)
+                    {
+                        Debug.Log("DONE");
+
+                        var t = model.Graphics();
+                        File.WriteAllBytes($"Assets\\Output\\{counter} {name} {i}.png", t.EncodeToPNG());
+//                        if (model is SimpleTiledModel && xelem.Get("textOutput", false))
+//                            System.IO.File.WriteAllText($"output\\{counter} {name} {i}.txt", (model as SimpleTiledModel).TextOutput());
+
+                        break;
+                    }
+                    else Debug.Log("CONTRADICTION");
+                }
+            }
+
+            counter++;
+        }
+
+        Console.WriteLine($"time = {sw.ElapsedMilliseconds}");
+        AssetDatabase.Refresh();
+    }
 
     [MenuItem("WFC/Run")]
     static void F()
@@ -49,13 +103,13 @@ class Integration
 //        Random.InitState(Time.tim);
         bool finished = false;
         OverlappingModel model = null;
-//        var name = "Dungeon";
-        var name = "Flowers";
+        var name = "Dungeon";
+//        var name = "Flowers";
 
         for (int i = 0; i < 1 && !finished; i++)
         {
-            model = new OverlappingModel(name, 3, 48, 48, true, true, 2, -4);
-//            model = new OverlappingModel(name, 3, 48, 48, true, true, 8, 0);
+//            model = new OverlappingModel(name, 3, 48, 48, true, true, 2, -4);
+            model = new OverlappingModel(name, 3, 48, 48, true, true, 8, 0);
             finished = model.Run(42, 0);//(int) (DateTime.Now.Millisecond), 0);
         }
 
@@ -87,7 +141,7 @@ class OverlappingModel : Model
         periodic = periodicOutput;
 
         var bitmap =
-            AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/{name}.png"); // new Bitmap($"samples/{name}.png");
+            AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Samples/{name}.png"); // new Bitmap($"samples/{name}.png");
         int smx = bitmap.width, smy = bitmap.height;
         byte[,] sample = new byte[smx, smy];
         _colors = new List<Color>();
@@ -165,10 +219,10 @@ class OverlappingModel : Model
         for (int y = 0; y < (periodicInput ? smy : smy - n + 1); y++)
         for (int x = 0; x < (periodicInput ? smx : smx - n + 1); x++)
         {
-            if (ordering.Count == 0)
-            {
-                Debug.Log($"{x} {y}");
-            }
+//            if (ordering.Count == 0)
+//            {
+//                Debug.Log($"{x} {y}");
+//            }
             byte[][] ps = new byte[8][];
 
             ps[0] = PatternFromSample(x, y);
@@ -200,14 +254,14 @@ class OverlappingModel : Model
         int counter = 0;
         foreach (long ww in ordering)
         {
-            sb.AppendLine(ww.ToString());
+//            sb.AppendLine(ww.ToString());
             _patterns[counter] = PatternFromIndex(ww);
             base.weights[counter] = weights[ww];
-            if (counter == 0)
-            {
-                
-                Debug.Log($"{ww} {BitConverter.ToString(_patterns[counter])} {weights[ww]}");
-            }
+//            if (counter == 0)
+//            {
+//                
+//                Debug.Log($"{ww} {BitConverter.ToString(_patterns[counter])} {weights[ww]}");
+//            }
             counter++;
         }
 
@@ -323,6 +377,6 @@ class OverlappingModel : Model
 
             Propagate();
         }
-        sb.AppendLine($"after ground {_ground} {entropies[0]} {sumsOfOnes[0]}");
+//        sb.AppendLine($"after ground {_ground} {entropies[0]} {sumsOfOnes[0]}");
     }
 }

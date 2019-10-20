@@ -42,7 +42,7 @@ abstract class Model
 
     void Init()
     {
-        Debug.Log(FMX + " " + FMY);
+//        Debug.Log(FMX + " " + FMY);
         wave = new bool[FMX * FMY][];
         compatible = new int[wave.Length][][];
         for (int i = 0; i < wave.Length; i++)
@@ -220,7 +220,7 @@ abstract class Model
 //            }
         }
 
-        sb.AppendLine(string.Join(" ", weights));
+//        sb.AppendLine(string.Join(" ", weights));
     }
 
     protected abstract bool OnBoundary(int x, int y);

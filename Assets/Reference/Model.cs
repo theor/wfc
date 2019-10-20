@@ -12,6 +12,8 @@ using System.Text;
 using UnityEngine;
 using Random = System.Random;
 
+
+
 abstract class Model
 {
     protected bool[][] wave;

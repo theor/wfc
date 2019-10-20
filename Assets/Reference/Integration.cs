@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
 using UnityEditor;
@@ -15,14 +16,19 @@ class Integration
     {
         Stopwatch sw = Stopwatch.StartNew();
 
-        Random random = new Random();
+        System.Random random = new System.Random(42);
+        
         XDocument xdoc = XDocument.Load("C:\\Users\\theor\\Downloads\\WaveFunctionCollapse-master\\samples.xml");
 
+        
         int counter = 1;
-        foreach (XElement xelem in xdoc.Root.Elements("overlapping", "simpletiled"))
+        var xElements = xdoc.Root.Elements("overlapping", "simpletiled");
+        var count = xElements.Count();
+        foreach (XElement xelem in xElements)
         {
             Model model;
             string name = xelem.Get<string>("name");
+            EditorUtility.DisplayProgressBar("Generating", name, counter / (float) count);
             Debug.Log($"< {name}");
 
             if (xelem.Name == "overlapping") model = new OverlappingModel(name, xelem.Get("N", 2), xelem.Get("width", 48), xelem.Get("height", 48),
@@ -32,13 +38,14 @@ class Integration
 //                xelem.Get("width", 10), xelem.Get("height", 10), xelem.Get("periodic", false), xelem.Get("black", false));
             else continue;
 
+            int a = 0;
             for (int i = 0; i < xelem.Get("screenshots", 2); i++)
             {
                 for (int k = 0; k < 10; k++)
                 {
                     Console.Write("> ");
-                    int seed = 42;// random.Next();
-                    bool finished = model.Run(seed, xelem.Get("limit", 0));
+                    int seed = random.Next();
+                    bool finished = model.Run(++a, xelem.Get("limit", 0));
                     if (finished)
                     {
                         Debug.Log("DONE");
@@ -56,6 +63,7 @@ class Integration
 
             counter++;
         }
+        EditorUtility.ClearProgressBar();
 
         Console.WriteLine($"time = {sw.ElapsedMilliseconds}");
         AssetDatabase.Refresh();
